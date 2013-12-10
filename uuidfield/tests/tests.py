@@ -12,7 +12,7 @@ class UUIDFieldTestCase(TestCase):
     def test_auto_uuid4(self):
         obj = AutoUUIDField.objects.create()
         self.assertTrue(obj.uuid)
-        self.assertEquals(len(obj.uuid), 32)
+        self.assertEquals(len(str(obj.uuid)), 36)
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 4)
 
@@ -22,14 +22,14 @@ class UUIDFieldTestCase(TestCase):
     def test_manual(self):
         obj = ManualUUIDField.objects.create(uuid=uuid.uuid4())
         self.assertTrue(obj)
-        self.assertEquals(len(obj.uuid), 32)
+        self.assertEquals(len(str(obj.uuid)), 36)
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 4)
 
     def test_namespace(self):
         obj = NamespaceUUIDField.objects.create()
         self.assertTrue(obj)
-        self.assertEquals(len(obj.uuid), 32)
+        self.assertEquals(len(str(obj.uuid)), 36)
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 5)
 
@@ -40,10 +40,9 @@ class UUIDFieldTestCase(TestCase):
         obj = HyphenatedUUIDField.objects.create(name='test')
         uuid = obj.uuid
 
-        self.assertTrue('-' in unicode(uuid))
         self.assertTrue('-' in str(uuid))
 
-        self.assertEquals(len(uuid), 36)
+        self.assertEquals(len(str(uuid)), 36)
 
         # ensure the hyphens don't affect re-saving object
         obj.name = 'shoe'

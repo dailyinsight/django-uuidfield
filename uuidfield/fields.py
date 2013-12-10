@@ -2,7 +2,8 @@ import uuid
 
 from django import forms
 from django.db.models import Field, SubfieldBase
-from django.utils.encoding import smart_unicode
+
+from django.utils.encoding import smart_text
 
 try:
     # psycopg2 needs us to register the uuid type
@@ -10,27 +11,6 @@ try:
     psycopg2.extras.register_uuid()
 except (ImportError, AttributeError):
     pass
-
-
-class StringUUID(uuid.UUID):
-    def __init__(self, *args, **kwargs):
-        # get around UUID's immutable setter
-        object.__setattr__(self, 'hyphenate', kwargs.pop('hyphenate', False))
-
-        super(StringUUID, self).__init__(*args, **kwargs)
-
-    def __unicode__(self):
-        return unicode(str(self))
-
-    def __str__(self):
-        if self.hyphenate:
-            return super(StringUUID, self).__str__()
-
-        return self.hex
-
-    def __len__(self):
-        return len(self.__unicode__())
-
 
 class UUIDField(Field):
     """
@@ -43,11 +23,10 @@ class UUIDField(Field):
     __metaclass__ = SubfieldBase
 
     def __init__(self, version=4, node=None, clock_seq=None,
-            namespace=None, name=None, auto=False, hyphenate=False, *args, **kwargs):
+            namespace=None, name=None, auto=False, *args, **kwargs):
         assert version in (1, 3, 4, 5), "UUID version %s is not supported." % version
         self.auto = auto
         self.version = version
-        self.hyphenate = hyphenate
         # We store UUIDs in hex format, which is fixed at 32 characters.
         kwargs['max_length'] = 32
         if auto:
@@ -107,7 +86,9 @@ class UUIDField(Field):
         Casts uuid.UUID values into the format expected by the back end
         """
         if isinstance(value, uuid.UUID):
-            return str(value)
+            return smart_text(value)
+        if not value:
+            return None
         return value
 
     def value_to_string(self, obj):
@@ -115,21 +96,15 @@ class UUIDField(Field):
         if val is None:
             data = ''
         else:
-            data = unicode(val)
+            data = smart_text(val)
         return data
 
     def to_python(self, value):
-        """
-        Returns a ``StringUUID`` instance from the value returned by the
-        database. This doesn't use uuid.UUID directly for backwards
-        compatibility, as ``StringUUID`` implements ``__unicode__`` with
-        ``uuid.UUID.hex()``.
-        """
         if not value:
             return None
         # attempt to parse a UUID including cases in which value is a UUID
-        # instance already to be able to get our StringUUID in.
-        return StringUUID(smart_unicode(value), hyphenate=self.hyphenate)
+        # instance already.
+        return uuid.UUID(smart_text(value))
 
     def formfield(self, **kwargs):
         defaults = {
