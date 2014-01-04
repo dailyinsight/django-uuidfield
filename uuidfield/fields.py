@@ -67,7 +67,9 @@ class UUIDField(Field):
         """
         if connection and 'postgres' in connection.vendor:
             return 'uuid'
-        return 'char(%s)' % self.field_length
+
+        # uuid.hex is 32 characters
+        return 'char(%s)' % 32
 
     def pre_save(self, model_instance, add):
         """
