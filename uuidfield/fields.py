@@ -27,8 +27,9 @@ class UUIDField(Field):
         assert version in (1, 3, 4, 5), "UUID version %s is not supported." % version
         self.auto = auto
         self.version = version
-        # We store UUIDs in hex format, which is fixed at 32 characters.
-        kwargs['max_length'] = 32
+        # 36 characters per UUID. Note we do not set the max_length in this case since the UUID
+        # class will self-validate and has no len().
+        self.field_length = 36
         if auto:
             # Do not let the user edit UUIDs if they are auto-assigned.
             kwargs['editable'] = False
@@ -66,7 +67,9 @@ class UUIDField(Field):
         """
         if connection and 'postgres' in connection.vendor:
             return 'uuid'
-        return 'char(%s)' % self.max_length
+
+        # uuid.hex is 32 characters
+        return 'char(%s)' % 32
 
     def pre_save(self, model_instance, add):
         """
@@ -109,7 +112,7 @@ class UUIDField(Field):
     def formfield(self, **kwargs):
         defaults = {
             'form_class': forms.CharField,
-            'max_length': self.max_length,
+            'max_length': self.field_length,
         }
         defaults.update(kwargs)
         return super(UUIDField, self).formfield(**defaults)

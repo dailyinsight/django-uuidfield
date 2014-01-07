@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-uuidfield',
-    version='0.4.0dig0',
+    version='0.4.0dig1',
     author='David Cramer',
     author_email='dcramer@gmail.com',
     description='UUIDField in Django',
